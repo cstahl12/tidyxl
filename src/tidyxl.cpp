@@ -15,8 +15,54 @@ using namespace Rcpp;
 // more xlsxsheet instances, iterating through them and returning a list of
 // 'sheets'.
 
+// New api, returns sheets and formats separately
 // [[Rcpp::export]]
-List xlsx_read_(
+List xlsx_cells_(
+    std::string path,
+    CharacterVector sheet_paths,
+    CharacterVector sheet_names,
+    CharacterVector comments_paths
+    ) {
+  // Parse book-level information (e.g. styles, themes, strings, date system)
+  xlsxbook book(path);
+
+  // Loop through sheets
+  List out(sheet_paths.size());
+
+  CharacterVector::iterator in_it;
+  List::iterator out_it;
+
+  int i = 0;
+  for(in_it = sheet_paths.begin(), out_it = out.begin();
+      in_it != sheet_paths.end();
+      ++in_it, ++out_it) {
+    String sheet_path(sheet_paths[i]);
+    String sheet_name(sheet_names[i]);
+    String comments_path(comments_paths[i]);
+    *out_it = xlsxsheet(sheet_name, sheet_path, book, comments_path).information();
+    ++i;
+  }
+
+  out.attr("names") = sheet_names;
+
+  return out;
+}
+
+// [[Rcpp::export]]
+List xlsx_formats_(std::string path) {
+  // Parse book-level information (e.g. styles, themes, strings, date system)
+  xlsxbook book(path);
+
+  List out = List::create(
+      _["local"] = book.styles_.local_,
+      _["style"] = book.styles_.style_);
+
+  return out;
+}
+
+// Old api, return formats and sheets together
+// [[Rcpp::export]]
+List tidy_xlsx_(
     std::string path,
     CharacterVector sheet_paths,
     CharacterVector sheet_names,

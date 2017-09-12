@@ -167,5 +167,5 @@ tidy_xlsx <- function(path, sheets = NA) {
     }
   }
   sheets <- standardise_sheet(sheets, all_sheets)
-  xlsx_read_(path, sheets$sheet_path, sheets$name, sheets$comments_path)
+  tidy_xlsx_(path, sheets$sheet_path, sheets$name, sheets$comments_path)
 }
