@@ -27,12 +27,6 @@ supports the xml-based file formats '.xlsx' and '.xlsm' via the embedded
 [RapidXML](http://rapidxml.sourceforge.net) C++ library.  It does not support
 the binary file formats '.xlsb' or '.xls'.
 
-It also provides a function `xlex()` for tokenizing formulas.  See the
-[vignette](file:///home/nacnudus/R/tidyxl/docs/articles/smells.html) for
-details.  It is useful for detecting 'spreadsheet smells' (poor practice such as
-embedding constants in formulas, or using deep levels of nesting), and for
-understanding the dependency structures within spreadsheets.
-
 ## Mailing list
 
 For bugs and/or issues, create a new issue on
@@ -184,27 +178,6 @@ Cell `A25` contains a formula that refers to another file.  The `[1]` is an
 index into a table of files.  The roadmap
 [tidyxl](https://github.com/nacnudus/tidyxl) for tidyxl includes de-referencing
 such numbers.
-
-#### Tokenizing formulas
-
-The function `xlex()` separates formulas into tokens of different types, and
-gives their depth within a nested formula.  Its name is a bad pun on 'Excel' and
-'lexer'.  Try the [online demo](https://duncan-garmonsway.shinyapps.io/xlex/)
-or run `demo_xlex()` locally.
-
-It is useful for detecting spreadsheet smells, which are poor practices in
-spreadsheet design, such as deep nests of functions, or embedding
-constants in formulas.
-
-```{r, fig.width = 7, fig.height = 5}
-x <- xlex("MIN(3,MAX(2,A1))")
-x
-
-plot_xlex(x) # Requires the ggraph package
-```
-
-See the [vignette](file:///home/nacnudus/R/tidyxl/docs/articles/smells.html) for
-more examples and details.
 
 ### Named ranges
 

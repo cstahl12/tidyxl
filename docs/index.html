@@ -38,10 +38,16 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="reference/index.html">Reference</a>
+  <a href="/index.html">
+    <span class="fa fa-home fa-lg"></span>
+     
+  </a>
 </li>
 <li>
-  <a href="articles/index.html">Articles</a>
+  <a href="articles/tidyxl.html">Get Started</a>
+</li>
+<li>
+  <a href="reference/index.html">Reference</a>
 </li>
 <li>
   <a href="news/index.html">News</a>
@@ -76,7 +82,6 @@
 <a href="#tidyxl" class="anchor"></a>tidyxl</h1></div>
 
 <p><a href="https://github.com/nacnudus/tidyxl">tidyxl</a> imports non-tabular data from Excel files into R. It exposes cell content, position, formatting and comments in a tidy structure for further manipulation, especially by the <a href="https://github.com/nacnudus/unpivotr">unpivotr</a> package. It supports the xml-based file formats ‘.xlsx’ and ‘.xlsm’ via the embedded <a href="http://rapidxml.sourceforge.net">RapidXML</a> C++ library. It does not support the binary file formats ‘.xlsb’ or ‘.xls’.</p>
-<p>It also provides a function <code><a href="reference/xlex.html">xlex()</a></code> for tokenizing formulas. See the <a href="file:///home/nacnudus/R/tidyxl/docs/articles/smells.html">vignette</a> for details. It is useful for detecting ‘spreadsheet smells’ (poor practice such as embedding constants in formulas, or using deep levels of nesting), and for understanding the dependency structures within spreadsheets.</p>
 <div id="mailing-list" class="section level2">
 <h2 class="hasAnchor">
 <a href="#mailing-list" class="anchor"></a>Mailing list</h2>
@@ -85,7 +90,7 @@
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">"nacnudus/tidyxl"</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">devtools<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/devtools/topics/install_github">install_github</a></span>(<span class="st">"nacnudus/tidyxl"</span>)</code></pre></div>
 </div>
 <div id="examples" class="section level2">
 <h2 class="hasAnchor">
@@ -105,7 +110,7 @@
 <span class="co">#&gt;       Female              0   0     3  20</span></code></pre></div>
 <p>The multi-row column headers make this difficult to import. A popular package for importing spreadsheets coerces the pivot table into a dataframe. It treats the second header row as though it were observations.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">titanic &lt;-<span class="st"> </span><span class="kw">system.file</span>(<span class="st">"extdata/titanic.xlsx"</span>, <span class="dt">package =</span> <span class="st">"tidyxl"</span>)
-readxl<span class="op">::</span><span class="kw">read_excel</span>(titanic)
+readxl<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/readxl/topics/read_excel">read_excel</a></span>(titanic)
 <span class="co">#&gt; # A tibble: 10 x 7</span>
 <span class="co">#&gt;     X__1   X__2      Age Child  X__3 Adult  X__4</span>
 <span class="co">#&gt;    &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span>
@@ -278,37 +283,11 @@ y[<span class="op">!</span><span class="kw">is.na</span>(y<span class="op">$</sp
 <a href="#formulas-referring-to-other-files" class="anchor"></a>Formulas referring to other files</h4>
 <p>Cell <code>A25</code> contains a formula that refers to another file. The <code>[1]</code> is an index into a table of files. The roadmap <a href="https://github.com/nacnudus/tidyxl">tidyxl</a> for tidyxl includes de-referencing such numbers.</p>
 </div>
-<div id="tokenizing-formulas" class="section level4">
-<h4 class="hasAnchor">
-<a href="#tokenizing-formulas" class="anchor"></a>Tokenizing formulas</h4>
-<p>The function <code><a href="reference/xlex.html">xlex()</a></code> separates formulas into tokens of different types, and gives their depth within a nested formula. Its name is a bad pun on ‘Excel’ and ‘lexer’. Try the <a href="https://duncan-garmonsway.shinyapps.io/xlex/">online demo</a> or run <code><a href="reference/demo_xlex.html">demo_xlex()</a></code> locally.</p>
-<p>It is useful for detecting spreadsheet smells, which are poor practices in spreadsheet design, such as deep nests of functions, or embedding constants in formulas.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">x &lt;-<span class="st"> </span><span class="kw"><a href="reference/xlex.html">xlex</a></span>(<span class="st">"MIN(3,MAX(2,A1))"</span>)
-x
-<span class="co">#&gt; # A tibble: 11 x 3</span>
-<span class="co">#&gt;    level      type token</span>
-<span class="co">#&gt;    &lt;int&gt;     &lt;chr&gt; &lt;chr&gt;</span>
-<span class="co">#&gt;  1     0  function   MIN</span>
-<span class="co">#&gt;  2     0  fun_open     (</span>
-<span class="co">#&gt;  3     1    number     3</span>
-<span class="co">#&gt;  4     1 separator     ,</span>
-<span class="co">#&gt;  5     1  function   MAX</span>
-<span class="co">#&gt;  6     1  fun_open     (</span>
-<span class="co">#&gt;  7     2    number     2</span>
-<span class="co">#&gt;  8     2 separator     ,</span>
-<span class="co">#&gt;  9     2       ref    A1</span>
-<span class="co">#&gt; 10     1 fun_close     )</span>
-<span class="co">#&gt; 11     0 fun_close     )</span>
-
-<span class="kw"><a href="reference/plot_xlex.html">plot_xlex</a></span>(x) <span class="co"># Requires the ggraph package</span></code></pre></div>
-<p><img src="README-unnamed-chunk-10-1.png" width="672"></p>
-<p>See the <a href="file:///home/nacnudus/R/tidyxl/docs/articles/smells.html">vignette</a> for more examples and details.</p>
-</div>
 </div>
 <div id="named-ranges" class="section level3">
 <h3 class="hasAnchor">
 <a href="#named-ranges" class="anchor"></a>Named ranges</h3>
-<p>Names are imported with <code>xlex_names()</code>. AKA ‘named formulas’ and ‘defined names’, these are usually used to name particular cells or ranges, making formulas that refer to them more readable. Ones that <em>are</em> ranges are identifed by the <code>is_range</code> column (using <code><a href="reference/is_range.html">is_range()</a></code>), making it easier to match the names to the cells returned by <code><a href="reference/tidy_xlsx.html">tidy_xlsx()</a></code> – e.g. by using the <a href="https://github.com/rsheets/cellranger"><code>cellranger</code></a> package.</p>
+<p>Names are imported with <code>xlex_names()</code>. AKA ‘named formulas’ and ‘defined names’, these are usually used to name particular cells or ranges, making formulas that refer to them more readable. Ones that <em>are</em> ranges are identifed by the <code>is_range</code> column (using <code>is_range()</code>), making it easier to match the names to the cells returned by <code><a href="reference/tidy_xlsx.html">tidy_xlsx()</a></code> – e.g. by using the <a href="https://github.com/rsheets/cellranger"><code>cellranger</code></a> package.</p>
 <p>When the scope of the name is within a particular sheet, rather than global, the sheet name is given.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="reference/xlsx_names.html">xlsx_names</a></span>(<span class="kw">system.file</span>(<span class="st">"extdata/examples.xlsx"</span>, <span class="dt">package =</span> <span class="st">"tidyxl"</span>))
 <span class="co">#&gt;                   name                     formula sheet_name is_range</span>
@@ -407,7 +386,8 @@ x
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2>Links</h2>
+    <h2 class="hasAnchor">
+<a href="#sidebar" class="anchor"></a>Links</h2>
 <ul class="list-unstyled">
 <li>Download from CRAN at <br><a href="https://cran.r-project.org/package=tidyxl">https://​cran.r-project.org/​package=tidyxl</a>
 </li>

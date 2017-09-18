@@ -25,7 +25,3 @@ xlsx_names_ <- function(path) {
     .Call('_tidyxl_xlsx_names_', PACKAGE = 'tidyxl', path)
 }
 
-xlex_ <- function(x) {
-    .Call('_tidyxl_xlex_', PACKAGE = 'tidyxl', x)
-}
-
