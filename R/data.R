@@ -4,7 +4,7 @@
 #'
 #' A dataset containing the names of all functions available in Excel.  This is
 #' useful for identifying user-defined functions in formulas tokenized by
-#' [xlex()].
+#' [lexl::lex_xl()].
 #'
 #' Note that this includes future function names that are already reserved.
 #'

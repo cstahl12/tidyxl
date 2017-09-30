@@ -78,8 +78,9 @@ inline std::string formatDate(double& date, int& dateSystem, int& dateOffset) {
 }
 
 // Based on hadley/readxl
-// unescape an ST_Xstring. See 22.9.2.19 [p3786]
-inline std::string unescape(const std::string& s) {
+// unescape an ST_Xstring from a node value. See 22.9.2.19 [p3786]
+inline std::string unescape(const rapidxml::xml_node<>* node) {
+  std::string s(node->value(), node->value_size());
   std::string out;
   out.reserve(s.size());
 
@@ -104,11 +105,11 @@ inline std::string unescape(const std::string& s) {
 // Based on hadley/readxl
 // Parser for <si> and <is> inlineStr tags CT_Rst [p3893]
 // returns true if a string is found, false if missing.
-inline bool parseString(const rapidxml::xml_node<>* string, std::string& out) {
+inline bool parseString(const rapidxml::xml_node<>* node, std::string& out) {
   bool found = false;
   out.clear();
 
-  const rapidxml::xml_node<>* t = string->first_node("t");
+  const rapidxml::xml_node<>* t = node->first_node("t");
   if (t != NULL) {
     // According to the spec (CT_Rst, p3893) a single <t> element
     // may coexist with zero or more <r> elements.
@@ -128,17 +129,17 @@ inline bool parseString(const rapidxml::xml_node<>* string, std::string& out) {
     //
     // We read the <t> tag, if present, first, then concatenate any <r> tags.
     // All Excel 2010 sheets will read correctly under this regime.
-    out = unescape(t->value());
+    out = unescape(t);
     found = true;
   }
   // iterate over all r elements
-  for (const rapidxml::xml_node<>* r = string->first_node("r"); r != NULL;
+  for (const rapidxml::xml_node<>* r = node->first_node("r"); r != NULL;
       r = r->next_sibling("r")) {
     // a unique t element should be present (CT_RElt [p3893])
     // but MacOSX preview just ignores chunks with no t element present
     const rapidxml::xml_node<>* t = r->first_node("t");
     if (t != NULL) {
-      out += unescape(t->value());
+      out += unescape(t);
       found = true;
     }
   }

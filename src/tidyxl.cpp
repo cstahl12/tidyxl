@@ -17,43 +17,22 @@ using namespace Rcpp;
 
 // New api, returns sheets and formats separately
 // [[Rcpp::export]]
-List xlsx_cells_(
+Rcpp::List xlsx_cells_(
     std::string path,
     CharacterVector sheet_paths,
     CharacterVector sheet_names,
     CharacterVector comments_paths
     ) {
-  // Parse book-level information (e.g. styles, themes, strings, date system)
-  xlsxbook book(path);
-
-  // Loop through sheets
-  List out(sheet_paths.size());
-
-  CharacterVector::iterator in_it;
-  List::iterator out_it;
-
-  int i = 0;
-  for(in_it = sheet_paths.begin(), out_it = out.begin();
-      in_it != sheet_paths.end();
-      ++in_it, ++out_it) {
-    String sheet_path(sheet_paths[i]);
-    String sheet_name(sheet_names[i]);
-    String comments_path(comments_paths[i]);
-    *out_it = xlsxsheet(sheet_name, sheet_path, book, comments_path).information();
-    ++i;
-  }
-
-  out.attr("names") = sheet_names;
-
-  return out;
+  xlsxbook book(path, sheet_paths, sheet_names, comments_paths);
+  return book.information();
 }
 
 // [[Rcpp::export]]
-List xlsx_formats_(std::string path) {
+Rcpp::List xlsx_formats_(std::string path) {
   // Parse book-level information (e.g. styles, themes, strings, date system)
   xlsxbook book(path);
 
-  List out = List::create(
+  Rcpp::List out = Rcpp::List::create(
       _["local"] = book.styles_.local_,
       _["style"] = book.styles_.style_);
 
@@ -62,7 +41,7 @@ List xlsx_formats_(std::string path) {
 
 // Old api, return formats and sheets together
 // [[Rcpp::export]]
-List tidy_xlsx_(
+Rcpp::List tidy_xlsx_(
     std::string path,
     CharacterVector sheet_paths,
     CharacterVector sheet_names,
@@ -72,10 +51,10 @@ List tidy_xlsx_(
   xlsxbook book(path);
 
   // Loop through sheets
-  List sheet_list(sheet_paths.size());
+  Rcpp::List sheet_list(sheet_paths.size());
 
   CharacterVector::iterator in_it;
-  List::iterator sheet_list_it;
+  Rcpp::List::iterator sheet_list_it;
 
   int i = 0;
   for(in_it = sheet_paths.begin(), sheet_list_it = sheet_list.begin();
@@ -90,9 +69,9 @@ List tidy_xlsx_(
 
   sheet_list.attr("names") = sheet_names;
 
-  List out = List::create(
+  Rcpp::List out = Rcpp::List::create(
       _["data"] = sheet_list,
-      _["formats"] = List::create(
+      _["formats"] = Rcpp::List::create(
         _["local"] = book.styles_.local_,
         _["style"] = book.styles_.style_));
 
@@ -138,7 +117,10 @@ DataFrame xlsx_sheet_files_(std::string path) {
   for (rapidxml::xml_node<>* relationship = relationships->first_node("Relationship");
       relationship; relationship = relationship->next_sibling()) {
     std::string target = relationship->first_attribute("Target")->value();
-    if (target.substr(0, 10) == "worksheets") { // Only store worksheets
+    std::string target_type = target.substr(0, 10);
+    if (target_type == "worksheets" || target_type == "chartsheet") {
+       // Only store worksheets and chartsheets -- requests for chartsheets are
+       // handled in the R wrapper
       id = relationship->first_attribute("Id")->value();
       ids.push_back(id);
       targets.insert({id, "xl/" + target}) ;
@@ -199,7 +181,7 @@ DataFrame xlsx_sheet_files_(std::string path) {
 }
 
 // [[Rcpp::export]]
-List xlsx_validation_(
+Rcpp::List xlsx_validation_(
     std::string path,
     CharacterVector sheet_paths,
     CharacterVector sheet_names
@@ -208,10 +190,10 @@ List xlsx_validation_(
   xlsxbook book(path);
 
   // Loop through sheets
-  List out(sheet_paths.size());
+  Rcpp::List out(sheet_paths.size());
 
   CharacterVector::iterator in_it;
-  List::iterator out_it;
+  Rcpp::List::iterator out_it;
 
   int i = 0;
   for(in_it = sheet_paths.begin(), out_it = out.begin();
@@ -229,6 +211,6 @@ List xlsx_validation_(
 }
 
 // [[Rcpp::export]]
-List xlsx_names_(std::string path) {
+Rcpp::List xlsx_names_(std::string path) {
   return xlsxnames(path).information();
 }

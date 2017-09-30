@@ -154,18 +154,14 @@
 #' Sheet1[Sheet1$local_format_id %in% bold_indices, ]
 tidy_xlsx <- function(path, sheets = NA) {
   path <- check_file(path)
-  all_sheets <- utils_xlsx_sheet_files(path)
-  if (anyNA(sheets)) {
-    if (length(sheets) > 1) {
-      warning("Argument 'sheets' included NAs, which were discarded.")
-      sheets <- sheets[!is.na(sheets)]
-      if (length(sheets) == 0) {
-        stop("All elements of argument 'sheets' were discarded.")
-      }
-    } else {
-      sheets <- all_sheets$order
-    }
-  }
-  sheets <- standardise_sheet(sheets, all_sheets)
-  tidy_xlsx_(path, sheets$sheet_path, sheets$name, sheets$comments_path)
+  sheets <- check_sheets(sheets, path)
+  all_sheets <- xlsx_cells_(path,
+                            sheets$sheet_path,
+                            sheets$name,
+                            sheets$comments_path)
+  # To split in sheet order, not alphabetically by sheet name
+  splits <- factor(all_sheets$sheet, levels = unique(all_sheets$sheet))
+  out_sheets <- all_sheets[, -1]
+  formats <- xlsx_formats_(path)
+  list(data = split(out_sheets, splits), formats = formats)
 }

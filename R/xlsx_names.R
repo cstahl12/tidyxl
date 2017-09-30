@@ -25,7 +25,7 @@
 #' * `is_range` Whether or not the `formula` is a range of cells.  This is handy
 #'     for joining to the set of cells referred to by a name.  In this context,
 #'     commas between cell addresses are always regarded as union operators --
-#'     this differs from [tidyxl::xlex()], see that help file for details.
+#'     this differs from [lexl::lex_xl()], see that help file for details.
 #'
 #' @export
 #' @examples
@@ -43,6 +43,6 @@ xlsx_names <- function(path) {
   out$sheet_id <- out$sheet_id + 1
   out <- merge(out, sheets, by.x = "sheet_id", by.y = "id", all.x = TRUE)
   out$sheet_id <- NULL
-  out$is_range <- is_range(out$formula)
+  out$is_range <- lexl::is_range(out$formula)
   out
 }

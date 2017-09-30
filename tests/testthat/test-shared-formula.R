@@ -12,4 +12,3 @@ test_that("Shared formulas are propogated correctly", {
   formulas <- tidyxl::tidy_xlsx("./formulas.xlsx")$data[[1]]$formula
   expect_equal(formulas[3], "N($A2)")
 })
-

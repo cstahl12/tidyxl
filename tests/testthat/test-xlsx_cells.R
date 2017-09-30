@@ -2,9 +2,9 @@ context("xlsx_cells()")
 
 test_that("xlsx_cells() warns of missing sheets", {
   expect_warning(expect_error(xlsx_cells("./examples.xlsx", c(NA, NA)),"All elements of argument 'sheets' were discarded."),  "Argument 'sheets' included NAs, which were discarded.")
-  expect_error(xlsx_cells("./examples.xlsx", "foo"), "Sheet\\(s\\) not found: \"foo\"")
-  expect_error(xlsx_cells("./examples.xlsx", c("foo", "bar")), "Sheet\\(s\\) not found: \"foo\", \"bar\"")
-  expect_error(xlsx_cells("./examples.xlsx", 5), "Only 3 sheet\\(s\\) found.")
+  expect_error(xlsx_cells("./examples.xlsx", "foo"), "Sheet(s) not found: \"foo\"")
+  expect_error(xlsx_cells("./examples.xlsx", c("foo", "bar")), "Sheet(s) not found: \"foo\", \"bar\"")
+  expect_error(xlsx_cells("./examples.xlsx", 5), "Only 4 sheet(s) found.", fixed = TRUE)
   expect_error(xlsx_cells("./examples.xlsx", TRUE), "Argument `sheet` must be either an integer or a string.")
 })
 

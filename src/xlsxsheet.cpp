@@ -1,5 +1,5 @@
 #include <Rcpp.h>
-#include "zip.h"
+/* #include "zip.h" */
 #include "rapidxml.h"
 #include "xlsxcell.h"
 #include "xlsxsheet.h"
@@ -8,6 +8,21 @@
 
 using namespace Rcpp;
 
+inline Rcpp::Function tidyxl(const std::string& fun){
+  Rcpp::Environment env = Rcpp::Environment::namespace_env("tidyxl");
+  return env[fun];
+}
+
+inline std::string zip_buffer(
+    const std::string& zip_path,
+    const std::string& file_path) {
+  Rcpp::Function zip_buffer = tidyxl("zip_buffer");
+  Rcpp::RawVector xml = Rcpp::as<Rcpp::RawVector>(zip_buffer(zip_path, file_path));
+  std::string buffer(RAW(xml), RAW(xml) + xml.size());
+  buffer.push_back('\0');
+  return buffer;
+}
+
 xlsxsheet::xlsxsheet(
     const std::string& name,
     const std::string& sheet_path,
@@ -15,23 +30,32 @@ xlsxsheet::xlsxsheet(
     Rcpp::String comments_path):
   name_(name),
   book_(book) {
-  std::string sheet_ = zip_buffer(book_.path_, sheet_path);
 
-  rapidxml::xml_document<> xml;
-  xml.parse<0>(&sheet_[0]);
+/*   // Doesn't work */
+/*   sheet_ = zip_buffer(book_.path_, sheet_path); */
 
-  rapidxml::xml_node<>* worksheet = xml.first_node("worksheet");
-  rapidxml::xml_node<>* sheetData = worksheet->first_node("sheetData");
+  // might work
+  std::string buffer = zip_buffer("./tests/testthat/examples.xlsx", "xl/worksheets/sheet2.xml");
+  sheet_ = buffer;
 
-  defaultRowHeight_ = 15;
-  defaultColWidth_ = 8.47;
+  Rcpp::Rcout << "constructor:\n" << sheet_ << "\n\n";
 
-  cacheDefaultRowColDims(worksheet);
-  cacheColWidths(worksheet);
-  initializeColumns(sheetData);
-  cacheComments(comments_path);
-  parseSheetData(sheetData);
-  appendComments();
+/*   rapidxml::xml_document<> xml; */
+/*   xml.parse<0>(&sheet_[0]); */
+
+/*   worksheet_ = xml.first_node("worksheet"); */
+/*   sheetData_ = worksheet_->first_node("sheetData"); */
+
+  /* defaultRowHeight_ = 15; */
+  /* defaultColWidth_ = 8.47; */
+
+  cacheCellcount();
+  Rcpp::Rcout << "constructed\n";
+  /* cacheDefaultRowColDims(worksheet_); */
+  /* cacheColWidths(worksheet_); */
+  /* initializeColumns(); */
+  /* cacheComments(comments_path); */
+  /* /1* appendComments(); *1/ */
 }
 
 List& xlsxsheet::information() {
@@ -46,7 +70,6 @@ List& xlsxsheet::information() {
       _["formula_type"] = formula_type_,
       _["formula_ref"] = formula_ref_,
       _["formula_group"] = formula_group_,
-      _["type"] = type_,
       _["data_type"] = data_type_,
       _["error"] = error_,
       _["logical"] = logical_,
@@ -118,46 +141,51 @@ void xlsxsheet::cacheColWidths(rapidxml::xml_node<>* worksheet) {
   }
 }
 
-unsigned long long int xlsxsheet::cacheCellcount(rapidxml::xml_node<>* sheetData) {
+void xlsxsheet::cacheCellcount() {
   // Iterate over all rows and cells to count.  The 'dimension' tag is no use
   // here because it describes a rectangle of cells, many of which may be blank.
-  unsigned long long int cellcount = 0;
-  for (rapidxml::xml_node<>* row = sheetData->first_node("row");
+  Rcpp::Rcout << "method:\n" << sheet_ << "\n\n";
+  rapidxml::xml_document<> xml;
+  xml.parse<0>(&sheet_[0]);
+  worksheet_ = xml.first_node("worksheet");
+  sheetData_ = worksheet_->first_node("sheetData");
+
+  cellcount_ = 0;
+  for (rapidxml::xml_node<>* row = sheetData_->first_node("row");
       row; row = row->next_sibling("row")) {
+    Rcpp::Rcout << "row\n";
     for (rapidxml::xml_node<>* c = row->first_node("c");
         c; c = c->next_sibling("c")) {
-      ++cellcount;
+      Rcpp::Rcout << "cell\n";
+      ++cellcount_;
     }
   }
-  return cellcount;
 }
 
-void xlsxsheet::initializeColumns(rapidxml::xml_node<>* sheetData) {
-  unsigned long long int cellcount = cacheCellcount(sheetData);
+void xlsxsheet::initializeColumns() {
   // Having done cacheCellcount(), make columns of that length
-  address_         = CharacterVector(cellcount, NA_STRING);
-  row_             = IntegerVector(cellcount,   NA_INTEGER);
-  col_             = IntegerVector(cellcount,   NA_INTEGER);
-  content_         = CharacterVector(cellcount, NA_STRING);
-  formula_         = CharacterVector(cellcount, NA_STRING);
-  formula_type_    = CharacterVector(cellcount, NA_STRING);
-  formula_ref_     = CharacterVector(cellcount, NA_STRING);
-  formula_group_   = IntegerVector(cellcount,   NA_INTEGER);
-  value_           = List(cellcount);
-  type_            = CharacterVector(cellcount, NA_STRING);
-  data_type_       = CharacterVector(cellcount, NA_STRING);
-  error_           = CharacterVector(cellcount, NA_STRING);
-  logical_         = LogicalVector(cellcount,   NA_LOGICAL);
-  numeric_         = NumericVector(cellcount,   NA_REAL);
-  date_            = NumericVector(cellcount,   NA_REAL);
+  address_         = CharacterVector(cellcount_, NA_STRING);
+  row_             = IntegerVector(cellcount_,   NA_INTEGER);
+  col_             = IntegerVector(cellcount_,   NA_INTEGER);
+  content_         = CharacterVector(cellcount_, NA_STRING);
+  formula_         = CharacterVector(cellcount_, NA_STRING);
+  formula_type_    = CharacterVector(cellcount_, NA_STRING);
+  formula_ref_     = CharacterVector(cellcount_, NA_STRING);
+  formula_group_   = IntegerVector(cellcount_,   NA_INTEGER);
+  value_           = List(cellcount_);
+  data_type_       = CharacterVector(cellcount_, NA_STRING);
+  error_           = CharacterVector(cellcount_, NA_STRING);
+  logical_         = LogicalVector(cellcount_,   NA_LOGICAL);
+  numeric_         = NumericVector(cellcount_,   NA_REAL);
+  date_            = NumericVector(cellcount_,   NA_REAL);
   date_.attr("class") = CharacterVector::create("POSIXct", "POSIXt");
   date_.attr("tzone") = "UTC";
-  character_       = CharacterVector(cellcount, NA_STRING);
-  comment_         = CharacterVector(cellcount, NA_STRING);
-  height_          = NumericVector(cellcount,   NA_REAL);
-  width_           = NumericVector(cellcount,   NA_REAL);
-  style_format_    = CharacterVector(cellcount, NA_STRING);
-  local_format_id_ = IntegerVector(cellcount,   NA_INTEGER);
+  character_       = CharacterVector(cellcount_, NA_STRING);
+  comment_         = CharacterVector(cellcount_, NA_STRING);
+  height_          = NumericVector(cellcount_,   NA_REAL);
+  width_           = NumericVector(cellcount_,   NA_REAL);
+  style_format_    = CharacterVector(cellcount_, NA_STRING);
+  local_format_id_ = IntegerVector(cellcount_,   NA_INTEGER);
 }
 
 void xlsxsheet::cacheComments(Rcpp::String comments_path) {
@@ -184,86 +212,88 @@ void xlsxsheet::cacheComments(Rcpp::String comments_path) {
   }
 }
 
-void xlsxsheet::parseSheetData(rapidxml::xml_node<>* sheetData) {
+void xlsxsheet::parseSheetData() {
   // Iterate through rows and cells in sheetData.  Cell elements are children
   // of row elements.  Columns are described elswhere in cols->col.
   rowHeights_.assign(1048576, defaultRowHeight_); // cache rowHeight while here
   unsigned long int rowNumber;
   i_ = 0; // counter for checkUserInterrupt
-  for (rapidxml::xml_node<>* row = sheetData->first_node();
+  for (rapidxml::xml_node<>* row = sheetData_->first_node();
       row; row = row->next_sibling()) {
-    rapidxml::xml_attribute<>* r = row->first_attribute("r");
-    if (r == NULL)
-      stop("Invalid row: lacks 'r' attribute");
-    rowNumber = strtod(r->value(), NULL);
-    // Check for custom row height
-    double rowHeight = defaultRowHeight_;
-    rapidxml::xml_attribute<>* ht = row->first_attribute("ht");
-    if (ht != NULL) {
-      rowHeight = strtod(ht->value(), NULL);
-      rowHeights_[rowNumber - 1] = rowHeight;
-    }
-
-    for (rapidxml::xml_node<>* c = row->first_node();
-        c; c = c->next_sibling()) {
-      xlsxcell cell(c, this, book_, i_);
-
-      // Height and width aren't really determined by the cell, so they're done
-      // in this sheet instance
-      height_[i_] = rowHeight;
-      width_[i_] = colWidths_[col_[i_] - 1];
-
-      ++i_;
-      if ((i_ + 1) % 1000 == 0)
-        checkUserInterrupt();
-    }
-  }
-}
-
-void xlsxsheet::appendComments() {
-  // Having constructed the comments_ map, they are each be deleted when they
-  // are matched to a cell.  That leaves only those comments that are on empty
-  // cells.  This code appends those remaining comments as empty cells.
-  int col;
-  int row;
-  for(std::map<std::string, std::string>::iterator it = comments_.begin();
-      it != comments_.end(); ++it) {
+    Rcpp::Rcout << i_ << "\n";
     ++i_;
-    // TODO: move address parsing to utils
-    std::string address = it->first.c_str(); // we need this std::string in a moment
-    // Iterate though the A1-style address string character by character
-    col = 0;
-    row = 0;
-    for(std::string::const_iterator iter = address.begin();
-        iter != address.end(); ++iter) {
-      if (*iter >= '0' && *iter <= '9') { // If it's a number
-        row = row * 10 + (*iter - '0'); // Then multiply existing row by 10 and add new number
-      } else if (*iter >= 'A' && *iter <= 'Z') { // If it's a character
-        col = 26 * col + (*iter - 'A' + 1); // Then do similarly with columns
-      }
-    }
-    address_.push_back(address);
-    row_.push_back(row);
-    col_.push_back(col);
-    content_.push_back(NA_STRING);
-    formula_.push_back(NA_STRING);
-    formula_type_.push_back(NA_STRING);
-    formula_ref_.push_back(NA_STRING);
-    formula_group_.push_back(NA_INTEGER);
-    type_.push_back(NA_STRING);
-    data_type_.push_back("blank");
-    error_.push_back(NA_STRING);
-    logical_.push_back(NA_LOGICAL);
-    numeric_.push_back(NA_REAL);
-    date_.push_back(NA_REAL);
-    character_.push_back(NA_STRING);
-    comment_.push_back(it->second.c_str());
-    height_.push_back(rowHeights_[row - 1]);
-    width_.push_back(colWidths_[col - 1]);
-    style_format_.push_back("Normal");
-    local_format_id_.push_back(1);
-  }
-  // Iterate though the A1-style address string character by character
+    /* rapidxml::xml_attribute<>* r = row->first_attribute("r"); */
+    /* if (r == NULL) */
+    /*   stop("Invalid row: lacks 'r' attribute"); */
+    /* rowNumber = strtod(r->value(), NULL); */
+    // Check for custom row height
+    /* double rowHeight = defaultRowHeight_; */
+    /* rapidxml::xml_attribute<>* ht = row->first_attribute("ht"); */
+    /* if (ht != NULL) { */
+    /*   rowHeight = strtod(ht->value(), NULL); */
+    /*   rowHeights_[rowNumber - 1] = rowHeight; */
+    /* } */
 
+    /* for (rapidxml::xml_node<>* c = row->first_node(); */
+    /*     c; c = c->next_sibling()) { */
+    /*   /1* xlsxcell cell(c, this, book_, i_); *1/ */
+
+    /*   // Height and width aren't really determined by the cell, so they're done */
+    /*   // in this sheet instance */
+    /*   book_.height_[i_] = rowHeight; */
+    /*   book_.width_[i_] = colWidths_[col_[i_] - 1]; */
+
+    /*   ++i_; */
+    /*   if ((i_ + 1) % 1000 == 0) */
+    /*     checkUserInterrupt(); */
+    /* } */
+  }
 }
+
+/* void xlsxsheet::appendComments() { */
+/*   // Having constructed the comments_ map, they are each be deleted when they */
+/*   // are matched to a cell.  That leaves only those comments that are on empty */
+/*   // cells.  This code appends those remaining comments as empty cells. */
+/*   int col; */
+/*   int row; */
+/*   for(std::map<std::string, std::string>::iterator it = comments_.begin(); */
+/*       it != comments_.end(); ++it) { */
+/*     ++i_; */
+/*     // TODO: move address parsing to utils */
+/*     std::string address = it->first.c_str(); // we need this std::string in a moment */
+/*     // Iterate though the A1-style address string character by character */
+/*     col = 0; */
+/*     row = 0; */
+/*     for(std::string::const_iterator iter = address.begin(); */
+/*         iter != address.end(); ++iter) { */
+/*       if (*iter >= '0' && *iter <= '9') { // If it's a number */
+/*         row = row * 10 + (*iter - '0'); // Then multiply existing row by 10 and add new number */
+/*       } else if (*iter >= 'A' && *iter <= 'Z') { // If it's a character */
+/*         col = 26 * col + (*iter - 'A' + 1); // Then do similarly with columns */
+/*       } */
+/*     } */
+/*     address_.push_back(address); */
+/*     row_.push_back(row); */
+/*     col_.push_back(col); */
+/*     content_.push_back(NA_STRING); */
+/*     formula_.push_back(NA_STRING); */
+/*     formula_type_.push_back(NA_STRING); */
+/*     formula_ref_.push_back(NA_STRING); */
+/*     formula_group_.push_back(NA_INTEGER); */
+/*     type_.push_back(NA_STRING); */
+/*     data_type_.push_back("blank"); */
+/*     error_.push_back(NA_STRING); */
+/*     logical_.push_back(NA_LOGICAL); */
+/*     numeric_.push_back(NA_REAL); */
+/*     date_.push_back(NA_REAL); */
+/*     character_.push_back(NA_STRING); */
+/*     comment_.push_back(it->second.c_str()); */
+/*     height_.push_back(rowHeights_[row - 1]); */
+/*     width_.push_back(colWidths_[col - 1]); */
+/*     style_format_.push_back("Normal"); */
+/*     local_format_id_.push_back(1); */
+/*   } */
+/*   // Iterate though the A1-style address string character by character */
+
+/* } */
 

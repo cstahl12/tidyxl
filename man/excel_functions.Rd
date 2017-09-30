@@ -17,7 +17,7 @@ excel_functions
 \description{
 A dataset containing the names of all functions available in Excel.  This is
 useful for identifying user-defined functions in formulas tokenized by
-\code{\link[=xlex]{xlex()}}.
+\code{\link[lexl:lex_xl]{lexl::lex_xl()}}.
 }
 \details{
 Note that this includes future function names that are already reserved.

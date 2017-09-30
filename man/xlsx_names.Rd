@@ -20,7 +20,7 @@ the sheet.  Otherwise \code{NA} for names defined globally.
 \item \code{is_range} Whether or not the \code{formula} is a range of cells.  This is handy
 for joining to the set of cells referred to by a name.  In this context,
 commas between cell addresses are always regarded as union operators --
-this differs from \code{\link[tidyxl:xlex]{tidyxl::xlex()}}, see that help file for details.
+this differs from \code{\link[lexl:lex_xl]{lexl::lex_xl()}}, see that help file for details.
 }
 }
 \description{
